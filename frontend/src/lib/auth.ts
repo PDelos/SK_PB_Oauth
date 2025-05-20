@@ -47,13 +47,14 @@ export async function loginWithOAuth(provider: string) {
 
             goto('/home');
         } else {
-            throw error(401, 'Authentication failed');
+            error(401, 'Authentication failed');
         }
     } catch (err) {
         console.error('Error during OAuth registration:', err);
-        throw error(500, 'An unexpected error occurred during authentication');
+        error(500, 'An unexpected error occurred during authentication');
     }
 }
+
 
 /**
  * Logs out the currently authenticated user.

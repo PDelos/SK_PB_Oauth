@@ -1,0 +1,1 @@
+<a href="/auth">go to auth</a>
