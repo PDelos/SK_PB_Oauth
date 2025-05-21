@@ -60,37 +60,52 @@ export async function loginWithOAuth(provider: string) {
 
 
 /**
- * Logs out the currently authenticated user.
+ * Logs out the currently authenticated user by calling the server logout endpoint.
  */
 export async function logout(): Promise<void> {
     try {
-        pb.authStore.clear(); // Clear the authentication store
+        const response = await fetch('/service/auth', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Logout failed');
+        }
+        
+        // Also clear client-side authentication
+        pb.authStore.clear();
+        
         console.log('User logged out successfully');
-        goto('/'); // Redirect to the homepage or login page
+        await goto('/auth');
     } catch (err) {
         console.error('Error during logout:', err);
-        throw error(500, 'Failed to log out');
+        throw error(404, 'Failed to log out');
     }
 }
 
 /**
  * Deletes the currently authenticated user's account.
- * 
- * @throws Error if the account deletion fails
  */
 export async function deleteAccount(): Promise<void> {
     try {
-        const userId = pb.authStore.record?.id; // Get the current user's ID
-        if (!userId) {
-            throw error(400, 'No authenticated user found');
+        const response = await fetch('/service/auth', {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw error(404, 'Account deletion failed');
         }
-
-        await pb.collection('users').delete(userId); // Delete the user account
-        pb.authStore.clear(); // Clear the authentication store
+        
+        // Also clear client-side authentication
+        pb.authStore.clear();
+        
         console.log('User account deleted successfully');
-        goto('/'); // Redirect to the homepage or login page
+        await goto('/auth');
     } catch (err) {
         console.error('Error during account deletion:', err);
-        throw error(500, 'Failed to delete account');
+        throw error(404, 'Failed to delete account');
     }
 }
