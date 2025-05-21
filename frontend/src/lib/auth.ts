@@ -45,6 +45,9 @@ export async function loginWithOAuth(provider: string) {
                 console.log('User logged in with', provider);
             }
 
+            const cookieString = pb.authStore.exportToCookie({ httpOnly: false });
+            document.cookie = cookieString;
+
             goto('/home');
         } else {
             error(401, 'Authentication failed');
