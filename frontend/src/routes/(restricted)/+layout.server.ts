@@ -1,6 +1,5 @@
 import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
-import type { RequestEvent } from '@sveltejs/kit';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	// Check if user is authenticated
