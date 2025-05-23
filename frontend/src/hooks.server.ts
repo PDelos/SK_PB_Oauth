@@ -14,7 +14,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     // Attempt to refresh the authentication to verify the token
     if (pb.authStore.isValid) {
       await pb.collection('users').authRefresh();
-      event.locals.user = pb.authStore.model;
+      event.locals.user = pb.authStore.record;
     }
   } catch {
     // Clear the authentication store if refresh fails

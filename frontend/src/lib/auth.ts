@@ -33,18 +33,15 @@ export async function loginWithOAuth(provider: string) {
             throw error(400, `Invalid provider: ${provider}`);
         }
 
-        const response = await pb.collection('users').authWithOAuth2({ provider });
+        const response = await pb.collection('users').authWithOAuth2({ provider,
+            createData: {
+                name: '',
+                avatar: '',
+                verified: false
+            } 
+        });
 
         if (pb.authStore.isValid) {
-            if (response.meta?.isNew) {
-                await pb.collection('users').update(response.record.id, {
-                    name: response.meta.name
-                });
-                console.log('New user registered with', provider);
-            } else {
-                console.log('User logged in with', provider);
-            }
-
             const cookieString = pb.authStore.exportToCookie({ httpOnly: false });
             document.cookie = cookieString;
 

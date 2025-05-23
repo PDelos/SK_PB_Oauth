@@ -1,9 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { loginWithOAuth, getOAuthProviders } from "$lib/auth";
-
+    import * as Card from "$lib/components/ui/card/index.js";
+    import { Button } from "$lib/components/ui/button";
+    import { Separator } from "$lib/components/ui/separator";
+    
     let loading: boolean = $state(true);
     let providers: string[] = $state([]);
+    let currentProvider: string | null = $state(null);
 
     // Before component mounts, we get all providers in pocketbase
     onMount(async () => {
@@ -11,31 +15,77 @@
         loading = false;
     });
     
-    function handleLogin(provider: string) {
-        loading = true; // Show loading while authenticating
-        loginWithOAuth(provider).finally(() => {
+    function handleLogin(providerId: string) {
+        currentProvider = providerId; // Show loading while authenticating
+        loginWithOAuth(providerId).finally(() => {
             loading = false;
         });
     }
+
+    // Format providers for display
+    const formattedProviders = $derived(providers.map(provider => ({
+        id: provider,
+        name: provider.charAt(0).toUpperCase() + provider.slice(1), // Capitalize first letter
+        iconUrl: `/icons/auth/${provider.toLowerCase()}.svg`
+    })));
 </script>
 
-<div class="max-w-md mx-auto mt-24 p-8 bg-white rounded-lg shadow-md">
-    <h1 class="text-2xl font-bold mb-8 text-gray-800 text-center">Login</h1>
+
+<section class="flex items-center justify-center w-screen h-screen">
+  <Card.Root class="w-100">
+    <Card.Header>
+      <Card.Title class="text-center text-4xl font-bold">
+        Login
+      </Card.Title>
+      <Card.Description class="text-center text-md">
+        {#if loading}
+          Loading providers...
+        {:else if providers.length === 0}
+          No login providers available
+        {:else}
+          Choose a provider to continue
+        {/if}
+      </Card.Description>
+    </Card.Header>
     
-    {#if loading}
-        <div class="p-4 text-gray-600 italic text-center">Loading...</div>
-    {:else if providers.length === 0}
-        <div class="p-4 text-gray-600 italic text-center">No login providers available</div>
-    {:else}
-        <div class="flex flex-col space-y-3">
-            {#each providers as provider}
-                <button 
-                    class="w-full py-3 px-4 rounded-md font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-400"
-                    onclick={() => handleLogin(provider)}
-                >
-                    Continue with {provider}
-                </button>
-            {/each}
-        </div>
+    <Card.Content>
+      <div class="flex flex-col gap-4 justify-start">
+        {#if providers.length > 0}
+          {#each formattedProviders as provider}
+            <Button onclick={() => handleLogin(provider.id)} variant="outline" disabled={currentProvider === provider.id}>
+              <div class= "flex w-[60%] justify-start items-center gap-4">
+                <span class="flex items-center justify-center w-6 h-6">
+                  <img 
+                    src={provider.iconUrl} 
+                    alt={`${provider.name} icon`} 
+                    class="w-full h-full object-contain"
+                  />
+                </span>
+                <p class="font-medium">Continue with {provider.name}</p>
+              </div>
+            </Button>
+          {/each}
+        {/if}
+      </div>
+    </Card.Content>
+    
+    {#if providers.length > 0}
+      <div class="px-6 my-2">
+        <Separator class="bg-accent" />
+      </div>
+    
+      <Card.Footer>
+        <p class="text-sm text-center text-muted-foreground">
+          By signing in, you agree to our
+          <a href="/terms" class="text-primary hover:underline">
+            Terms of Service
+          </a> 
+          and 
+          <a href="/privacy" class="text-primary hover:underline">
+            Privacy Policy
+          </a>
+        </p>
+      </Card.Footer>
     {/if}
-</div>
+  </Card.Root>
+</section>
