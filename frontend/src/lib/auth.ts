@@ -31,17 +31,22 @@ export async function loginWithOAuth(provider: string) {
 
         if (!provider || !providers.includes(provider)) {
             throw error(400, `Invalid provider: ${provider}`);
-        }
-
-        const response = await pb.collection('users').authWithOAuth2({ provider,
-            createData: {
-                name: '',
-                avatar: '',
-                verified: false
-            } 
-        });
-
+        }        
+        
+        const response = await pb.collection('users').authWithOAuth2({ provider });
         if (pb.authStore.isValid) {
+            // Create user-info record for the new user
+            try {
+                const userInfo = await createUserInfo(response.record.id);
+                // Link the user_info record to the user (now they have the same ID)
+                await pb.collection('users').update(response.record.id, {
+                    info: userInfo.id
+                });
+            } catch (infoError) {
+                console.warn('Failed to create user-info record:', infoError);
+                // Don't fail the authentication, just log the warning
+            }
+
             const cookieString = pb.authStore.exportToCookie({ httpOnly: false });
             document.cookie = cookieString;
 
@@ -104,5 +109,58 @@ export async function deleteAccount(): Promise<void> {
     } catch (err) {
         console.error('Error during account deletion:', err);
         throw error(404, 'Failed to delete account');
+    }
+}
+
+
+
+
+/**
+ * Creates a user-info record for a new user
+ * 
+ * @param userId - The ID of the user to create info for
+ * @returns The created user_info record
+ * @throws Error if creation fails
+ */
+export async function createUserInfo(userId: string): Promise<any> {
+    try {
+        const userInfo = await pb.collection('user_info').create({
+            id: userId, // Set the same ID as the user
+            user: userId, // Link to the user
+            name: '',
+            avatar: null,
+            cv: null,
+            github: '',
+            linkedin: '',
+            website: '',
+            preferences: []
+        });
+        console.log('User info record created successfully');
+        return userInfo;
+    } catch (err) {
+        console.error('Error creating user info:', err);
+        throw err;
+    }
+}
+
+/**
+ * Updates the user-info record for the current user
+ * 
+ * @param data - An object containing the fields to update
+ * @throws Error if the update fails or no user is authenticated
+ */
+export async function updateUserInfo(data: Record<string, any>): Promise<void> {
+    try {
+        const user = pb.authStore.record;
+        if (!user || !user.info) {
+            throw error(401, 'No authenticated user or user info found');
+        }
+
+        // Update the user-info record directly using the relation
+        await pb.collection('user_info').update(user.info, data);
+        console.log('User info updated successfully');
+    } catch (err) {
+        console.error('Error updating user info:', err);
+        throw error(400, 'Failed to update user info');
     }
 }

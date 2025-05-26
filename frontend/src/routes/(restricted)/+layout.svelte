@@ -9,8 +9,10 @@
 <Sidebar.Provider>
     <AppSidebar />
     <main >
-        <Sidebar.Trigger />
-        <AppBreadCrumb />
+        <div class="flex grid-cols-2 gap-4 items-center">
+            <Sidebar.Trigger />
+            <AppBreadCrumb />
+        </div>
         {@render children?.()}
     </main>
 </Sidebar.Provider>
