@@ -6,8 +6,8 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user || !locals.pb.authStore.isValid) {
 		throw redirect(303, '/auth');
 	}
-  
+
 	return {
-		user: locals.user,
+		user: locals.user
 	};
 };
